@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "langchain-docs": {
+      "url": "https://docs.langchain.com/mcp",
+      "transport": "http"
+    },
+    "pubmed": {
+      "url": "https://pubmed.mcp.claude.com/mcp",
+      "transport": "http"
+    }
+  }
+}

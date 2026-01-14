@@ -1,0 +1,28 @@
+[project]
+name = "dsrna-designer"
+version = "0.1.0"
+description = "RNAi biopesticide design platform - dsRNA candidate generation with off-target screening"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "deepagents-cli>=0.0.12",
+    "python-dotenv>=1.2.1",
+    "httpx>=0.27.0",
+    "biopython>=1.84",
+    "langchain-mcp-adapters>=0.2.1",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "pandas>=2.1.0",
+    "numpy>=1.26.0",
+]
+
+[project.scripts]
+dsrna-designer = "dsrna_agent.agent:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dsrna_agent*"]
