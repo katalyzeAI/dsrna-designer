@@ -116,25 +116,48 @@ def _sanitize_nones(obj):
 
 
 def _wrap_tool_with_sanitizer(tool):
-    """Wrap a tool to sanitize None values in its output."""
-    original_invoke = tool.invoke
+    """Wrap a tool to sanitize None values in its output.
 
-    def sanitized_invoke(*args, **kwargs):
-        result = original_invoke(*args, **kwargs)
+    Creates a new tool that wraps the original, sanitizing None values
+    in the response to avoid schema validation errors.
+    """
+    from langchain_core.tools import StructuredTool
+
+    original_func = tool.func if hasattr(tool, 'func') else tool._run
+
+    def sanitized_func(*args, **kwargs):
+        result = original_func(*args, **kwargs)
         return _sanitize_nones(result)
 
-    tool.invoke = sanitized_invoke
-    return tool
+    # Handle async functions
+    original_afunc = getattr(tool, 'coroutine', None) or getattr(tool, '_arun', None)
+
+    async def sanitized_afunc(*args, **kwargs):
+        if original_afunc:
+            result = await original_afunc(*args, **kwargs)
+        else:
+            result = sanitized_func(*args, **kwargs)
+        return _sanitize_nones(result)
+
+    return StructuredTool(
+        name=tool.name,
+        description=tool.description,
+        func=sanitized_func,
+        coroutine=sanitized_afunc if original_afunc else None,
+        args_schema=tool.args_schema,
+    )
 
 
 def load_mcp_tools():
     """Load tools from MCP servers defined in mcp_config.json."""
     if not MCP_CONFIG_PATH.exists():
+        print("MCP config not found, skipping MCP tools")
         return []
 
     try:
         from langchain_mcp_adapters.client import MultiServerMCPClient
     except ImportError:
+        print("langchain_mcp_adapters not installed, skipping MCP tools")
         return []
 
     with open(MCP_CONFIG_PATH) as f:
@@ -148,15 +171,29 @@ def load_mcp_tools():
     }
 
     if not connections:
+        print("No MCP servers configured")
         return []
 
+    async def _load():
+        client = MultiServerMCPClient(connections, tool_name_prefix=True)
+        return await client.get_tools()
+
     try:
-        tools = asyncio.run(
-            MultiServerMCPClient(connections, tool_name_prefix=True).get_tools()
-        )
+        # Handle both cases: running event loop (LangGraph server) or no loop (CLI)
+        try:
+            loop = asyncio.get_running_loop()
+            # We're in an async context - use nest_asyncio to allow nested run
+            import nest_asyncio
+            nest_asyncio.apply()
+            tools = asyncio.run(_load())
+        except RuntimeError:
+            # No running event loop - safe to use asyncio.run()
+            tools = asyncio.run(_load())
+
         # Wrap tools to handle None values in responses (schema validation fix)
         return [_wrap_tool_with_sanitizer(t) for t in tools]
-    except Exception:
+    except Exception as e:
+        print(f"Error loading MCP tools: {e}")
         return []
 
 

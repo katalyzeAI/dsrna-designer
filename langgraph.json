@@ -4,5 +4,13 @@
     "dsrna_agent": "./dsrna_agent/graph.py:graph"
   },
   "env": ".env",
-  "dependencies": ["."]
+  "dependencies": ["."],
+  "http": {
+    "cors": {
+      "allow_origins": ["*"],
+      "allow_credentials": false,
+      "allow_methods": ["*"],
+      "allow_headers": ["*"]
+    }
+  }
 }
