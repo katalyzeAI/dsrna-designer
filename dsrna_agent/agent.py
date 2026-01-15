@@ -1,10 +1,13 @@
-"""dsRNA Designer Agent - Built on deepagents library with skills middleware.
+"""dsRNA Designer Agent - Flexible research assistant for RNAi biopesticide design.
 
 This agent uses:
 - FilesystemBackend for direct filesystem access (genomes, BLAST DBs, outputs)
 - SkillsMiddleware for progressive disclosure of dsRNA design skills
 - MCP integration for PubMed literature search
-- Local domain tools for BLAST screening and dsRNA design
+- Fundamental tools only (filesystem, shell) - no hardcoded domain tools
+
+The agent assists with partial tasks, research, or complete workflows,
+with human confirmation at each major step.
 """
 
 import asyncio
@@ -19,19 +22,11 @@ load_dotenv()
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 
-from .tools import (
-    design_dsrna_candidates,
-    fetch_genome,
-    generate_report,
-    identify_essential_genes,
-    literature_search,
-    run_offtarget_blast,
-    score_efficiency,
-)
-
 PROJECT_ROOT = Path(__file__).parent.parent
 MCP_CONFIG_PATH = PROJECT_ROOT / "mcp_config.json"
-SKILLS_PATH = PROJECT_ROOT / ".deepagents" / "skills"
+
+# Skills are stored in the package directory
+SKILLS_DIR = Path(__file__).parent / "skills"
 
 
 def load_mcp_tools():
@@ -42,122 +37,132 @@ def load_mcp_tools():
     try:
         from langchain_mcp_adapters.client import MultiServerMCPClient
     except ImportError:
-        print("Warning: langchain-mcp-adapters not installed, skipping MCP tools")
         return []
 
     with open(MCP_CONFIG_PATH) as f:
         config = json.load(f)
 
     servers = config.get("mcpServers", {})
-    if not servers:
-        return []
-
-    connections = {}
-    for name, server_config in servers.items():
-        url = server_config.get("url")
-        transport = server_config.get("transport", "http")
-        if url and transport in ("http", "sse"):
-            connections[name] = {"url": url, "transport": "streamable_http"}
+    connections = {
+        name: {"url": cfg["url"], "transport": "streamable_http"}
+        for name, cfg in servers.items()
+        if cfg.get("url") and cfg.get("transport") in ("http", "sse")
+    }
 
     if not connections:
         return []
 
-    async def get_tools():
-        client = MultiServerMCPClient(connections, tool_name_prefix=True)
-        tools = await client.get_tools()
-        return tools
-
     try:
-        return asyncio.run(get_tools())
-    except Exception as e:
-        print(f"Warning: Failed to load MCP tools: {e}")
+        return asyncio.run(
+            MultiServerMCPClient(connections, tool_name_prefix=True).get_tools()
+        )
+    except Exception:
         return []
 
 
-SYSTEM_PROMPT = """You are an RNAi biopesticide design assistant. Your goal is to
-design dsRNA molecules that effectively kill target pest species while ensuring
-safety for humans and beneficial insects like honeybees.
+# System prompt - describes role, does NOT hardcode workflow
+SYSTEM_PROMPT = """You are an agricultural biotechnology research assistant specializing in
+RNAi-based biopesticides. You help plant scientists and agricultural researchers design
+dsRNA molecules for sustainable, species-specific pest management.
 
-## Core Workflow
+## Background
 
-Execute these steps in order for each target species. After each step, present
-results and ask to proceed:
+RNA interference (RNAi) biopesticides are an EPA-registered class of agricultural pest
+management tools. Unlike broad-spectrum chemical pesticides, RNAi biopesticides use
+double-stranded RNA (dsRNA) that targets specific genes in agricultural pest insects,
+providing species-specific control while minimizing environmental impact. This technology
+is used in commercial products like Bayer's SmartStax PRO corn (targeting corn rootworm)
+and is actively researched for managing crop pests like Colorado potato beetle, spotted
+wing drosophila, and aphids.
+
+Your role is to assist researchers in designing dsRNA sequences that:
+1. Effectively target essential genes in agricultural pest insects
+2. Pass rigorous safety screening against non-target organisms (humans, pollinators)
+3. Meet EPA regulatory guidelines for environmental safety
+
+## How to Help
+
+- **Partial tasks**: User may ask for just one step (e.g., "search for RNAi papers")
+- **Research**: User may want to explore without running the full workflow
+- **Complete workflow**: If user requests full dsRNA design, run all steps but STOP
+  after each to confirm before proceeding
+
+## Complete Workflow Mode
+
+Trigger phrases: "design dsRNA for {species}", "run complete workflow", "full analysis"
+
+When running complete workflow:
+1. Execute each step using the relevant skill
+2. Present results clearly
+3. Ask "Proceed to next step?" before continuing
+4. Allow user to adjust, skip, or stop at any point
+
+## Workflow Steps
 
 | Step | Skill | Key Output |
 |------|-------|------------|
 | 1 | fetch-genome | Genome stats, CDS sequences |
-| 2 | identify-genes | Gene ranking with evidence |
-| 3 | design-dsrna | Candidate locations, GC distribution |
-| 4 | blast-screen | Safety heatmap, match distribution |
-| 5 | score-rank | Score breakdown, ranked list |
-| 6 | generate-report | Final report, dashboard |
+| 2 | literature-search | Gene targets from published RNAi studies |
+| 3 | identify-genes | Gene ranking with evidence |
+| 4 | design-dsrna | Candidate locations, GC distribution |
+| 5 | blast-screen | Safety heatmap, match distribution |
+| 6 | score-rank | Score breakdown, ranked list |
+| 7 | generate-report | Final report, dashboard |
 
-## Safety Rules (EPA Guidelines)
+## Safety Screening (EPA Guidelines)
 
-- ALWAYS screen candidates against human and honeybee genomes
-- REJECT any candidate with ≥19bp contiguous match to non-targets
+All candidates undergo mandatory off-target screening:
+- REJECT any candidate with >=19bp contiguous match to human or honeybee genomes
 - FLAG candidates with 15-18bp matches as "caution"
-- Prefer genes with low conservation in non-target species
+- Prefer genes with low conservation in beneficial insects and mammals
+
+## Using Skills
+
+Read the SKILL.md file for each step before executing. Skills contain:
+- Detailed instructions for each workflow step
+- Scripts to run for data processing and visualization
+- Reference materials and templates
+
+Example:
+```
+read_file dsrna_agent/skills/fetch-genome/SKILL.md
+```
 
 ## Output Location
 
 All artifacts are written to `output/{species_slug}/`:
 - `genome.fasta` - Downloaded CDS sequences
-- `essential_genes.json` - Ranked essential genes  
+- `essential_genes.json` - Ranked essential genes
 - `candidates.json` - dsRNA candidates with scores
 - `blast_results.json` - Off-target screening results
 - `report.md` - Final report with recommendations
-
-## Important Notes
-
-- Use the skills system for detailed step-by-step instructions
-- Read SKILL.md files for each step before executing
-- If BLAST databases are missing, inform user to run `./setup_blast_db.sh`
-- Always explain your reasoning when selecting genes and candidates
 """
 
 
 def create_dsrna_agent():
-    """Create and return the dsRNA designer agent.
-    
+    """Create the dsRNA design assistant.
+
     Uses deepagents library with:
     - FilesystemBackend for direct file access
-    - SkillsMiddleware for dsRNA design workflow skills
-    - Domain-specific tools for BLAST, design, scoring
-    - MCP tools for PubMed literature search
+    - SkillsMiddleware loads skills from dsrna_agent/skills/
+    - MCP tools for PubMed (if configured)
+    - No hardcoded domain tools - uses fundamental tools only
     """
-    # Load MCP tools (PubMed, etc.)
+    # FilesystemBackend for project file access (genomes, outputs, etc.)
+    backend = FilesystemBackend(root_dir=PROJECT_ROOT)
+
+    # MCP tools (PubMed)
     mcp_tools = load_mcp_tools()
     if mcp_tools:
         print(f"Loaded {len(mcp_tools)} MCP tools: {[t.name for t in mcp_tools]}")
 
-    # Domain-specific tools
-    domain_tools = [
-        fetch_genome,
-        literature_search,
-        identify_essential_genes,
-        design_dsrna_candidates,
-        run_offtarget_blast,
-        score_efficiency,
-        generate_report,
-    ]
-    
-    all_tools = domain_tools + mcp_tools
-
-    # FilesystemBackend for direct filesystem access
-    # This allows the agent to read/write files in the project directory
-    backend = FilesystemBackend(root_dir=PROJECT_ROOT)
-
-    # Skills are loaded from .deepagents/skills/
-    # Each skill has a SKILL.md with instructions
-    skills_sources = [str(SKILLS_PATH) + "/"]
-
     return create_deep_agent(
-        model="claude-sonnet-4-5-20250929",
-        tools=all_tools,
+        model="claude-3-7-sonnet-20250219",
+        tools=mcp_tools,  # Only MCP tools - fundamental tools come from deepagents
         system_prompt=SYSTEM_PROMPT,
         backend=backend,
-        skills=skills_sources,
+        # SkillsMiddleware handles loading, parsing frontmatter, and progressive disclosure
+        skills=[str(SKILLS_DIR) + "/"],
     )
 
 
@@ -170,7 +175,7 @@ def main():
 
     query = " ".join(sys.argv[1:])
 
-    print(f"Starting dsRNA Designer Agent...")
+    print("Starting dsRNA Designer Agent...")
     print(f"Query: {query}")
     print("-" * 50)
 

@@ -327,13 +327,13 @@ def main():
 
 ## Migration Steps
 
-1. [ ] Create `dsrna_agent/skills/` directory structure per Agent Skills spec
-2. [ ] Move each skill from `.deepagents/skills/{name}/` to `dsrna_agent/skills/{name}/`
-3. [ ] Move scripts INTO each skill's `scripts/` directory
-4. [ ] Update `agent.py` with new system prompt and skills path
-5. [ ] Delete `tools.py` (remove hardcoded tools)
-6. [ ] Update `pyproject.toml` to include package data
-7. [ ] Remove `.deepagents/` directory
+1. [x] Create `dsrna_agent/skills/` directory structure per Agent Skills spec
+2. [x] Move each skill from `.deepagents/skills/{name}/` to `dsrna_agent/skills/{name}/`
+3. [x] Move scripts INTO each skill's `scripts/` directory
+4. [x] Update `agent.py` with new system prompt and skills path
+5. [x] Delete `tools.py` (remove hardcoded tools)
+6. [x] Update `pyproject.toml` to include package data
+7. [x] Remove `.deepagents/` directory
 8. [ ] Test partial task execution
 9. [ ] Test complete workflow with step confirmations
 

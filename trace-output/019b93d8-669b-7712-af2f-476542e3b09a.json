@@ -1,0 +1,12 @@
+[
+  {
+    "role": "user",
+    "id": "4e667dc4-65f3-476f-ba31-6eadca425ae7",
+    "content": "On 30Sep2025, Stage 2 portion of DOC-706295 \"MET-001088 JCAR017 Interferon Gamma Quantification by AlphaLISA\" for Breyanzi\u00c2\u00ae Cryopreserved Drug Product (CDP) JOIN 5WFA-XA09A CD4+ (SAP Batch ADD6579) was performed by QC Analytical Associate CH (BMS ID: 00580142). Testing yielded an Out of Specification (OOS) Interferon Gamma (IFN\u00ce\u00b3) Secretion Potency result of 1.3 fg IFN\u00ce\u00b3/CD3+CAR+ Cell. On 01Oct2025, QC Analytical Associate BLT (BMS ID: 00560496) reviewed DOC-706295 results and confirmed the assay is valid. "
+  },
+  {
+    "role": "assistant",
+    "id": "lc_run--019b93d8-6917-7752-a26b-bdc0eb6384a0",
+    "content": "I see this is an **Out of Specification (OOS) result for Interferon Gamma (IFN\u03b3) Secretion Potency** in a Breyanzi cryopreserved drug product batch. This is a critical quality attribute test failure.\n\n**Quick Assessment:**\n- **Event type:** OOS result for critical quality attribute (IFN\u03b3 Secretion Potency)\n- **Product:** Breyanzi\u00ae Cryopreserved Drug Product (CDP)\n- **Material:** JOIN 5WFA-XA09A CD4+ (SAP Batch ADD6579)\n- **Test result:** 1.3 fg IFN\u03b3/CD3+CAR+ Cell (OOS)\n- **Test method:** MET-001088 (AlphaLISA)\n- **Preliminary severity:** Likely **CRITICAL** or **MAJOR** - this is a filed potency attribute for a commercial drug product\n\n**Key details I have:**\n- **When:** Testing performed 30-Sep-2025, results reviewed/confirmed 01-Oct-2025\n- **Who:** Tested by CH (BMS ID: 00580142), Reviewed by BLT (BMS ID: 00560496)\n- **What:** IFN\u03b3 Secretion Potency = 1.3 fg IFN\u03b3/CD3+CAR+ Cell (OOS)\n- **Where:** QC Analytical (Stage 2 of DOC-706295)\n- **Assay validity:** Confirmed valid by reviewer\n\n**Before I start the formal deviation initiation analysis, I need:**\n1. **What is the specification limit for IFN\u03b3 Secretion Potency?** (e.g., \u2265 X fg IFN\u03b3/CD3+CAR+ Cell)\n2. **What is the batch number for the final drug product?** (I have the intermediate material batch ADD6579, but need the final CDP batch if different)\n3. **Has this batch been released to distribution, or is it still in QC hold?**\n\nThese details will help determine the severity and regulatory impact."
+  }
+]

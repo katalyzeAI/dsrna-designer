@@ -1,0 +1,8 @@
+{
+  "$schema": "https://langchain-ai.github.io/langgraph/schemas/langgraph.schema.json",
+  "graphs": {
+    "dsrna_agent": "./dsrna_agent/graph.py:graph"
+  },
+  "env": ".env",
+  "dependencies": ["."]
+}
