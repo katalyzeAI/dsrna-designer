@@ -298,6 +298,8 @@ def create_dsrna_agent():
     - MCP tools for PubMed (if configured)
     - fetch_url tool for web requests
     """
+    from langchain_anthropic import ChatAnthropic
+
     # LocalSandboxBackend extends FilesystemBackend with execute() for shell commands
     backend = LocalSandboxBackend(root_dir=PROJECT_ROOT)
 
@@ -309,8 +311,15 @@ def create_dsrna_agent():
     # Custom tools: fetch_url for web requests
     custom_tools = [fetch_url]
 
-    return create_deep_agent(
+    # Use model instance with reduced max_tokens to avoid context limit errors
+    # Default is 64000, but with large conversations this can exceed 200k limit
+    model = ChatAnthropic(
         model="claude-3-7-sonnet-20250219",
+        max_tokens=16000,
+    )
+
+    return create_deep_agent(
+        model=model,
         tools=mcp_tools + custom_tools,
         system_prompt=SYSTEM_PROMPT,
         backend=backend,
