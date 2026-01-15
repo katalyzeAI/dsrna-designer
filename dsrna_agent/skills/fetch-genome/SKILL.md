@@ -132,7 +132,24 @@ query: "{species}" AND (RNAi OR dsRNA OR "RNA interference" OR "gene silencing")
 max_results: 50
 ```
 
-Save results to `data/{ASSEMBLY_ACCESSION}/literature_search.json`.
+**IMPORTANT:** When saving results, you MUST extract gene names from each paper's
+title and abstract. See `dsrna_agent/skills/literature-search/SKILL.md` for the
+list of gene patterns to look for (vATPase, chitin synthase, acetylcholinesterase, etc.)
+
+Save to `data/{ASSEMBLY_ACCESSION}/literature_search.json` in this format:
+```json
+[
+  {
+    "pmid": "12345678",
+    "title": "...",
+    "gene_names": ["vATPase", "chitin synthase"],
+    ...
+  }
+]
+```
+
+The `gene_names` field is **REQUIRED** for downstream scripts to give literature
+support scores to candidate genes.
 
 **This step does NOT require user confirmation** - literature search is automatic.
 

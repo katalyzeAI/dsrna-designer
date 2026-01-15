@@ -30,7 +30,7 @@ PubMed provides peer-reviewed, citable scientific literature with structured met
 
 ### Step 1: Search PubMed Using MCP Server
 
-Use the PubMed MCP tools (loaded from `https://pubmed.mcp.claude.com/mcp`).
+Use the PubMed MCP tools.
 
 **For species-wide RNAi research:**
 ```
@@ -54,65 +54,90 @@ pubmed_get_article_metadata
 pmids: ["PMID1", "PMID2", ...]
 ```
 
-### Step 3: Extract Gene Information
+### Step 3: Extract Gene Names (CRITICAL)
 
-From article titles and abstracts, identify mentioned genes. Look for:
+**You MUST extract gene names from each paper's title and abstract.**
 
-| Gene Family | Pattern Matches |
-|-------------|-----------------|
-| V-ATPase | V-ATPase, vATPase, vha, ATP6V, vacuolar ATPase |
-| Chitin synthase | chitin synthase, ChS, CHS |
-| Acetylcholinesterase | acetylcholinesterase, AChE, Ace |
-| Tubulin | alpha-tubulin, beta-tubulin, tubulin |
-| Ribosomal | ribosomal protein, RpS, RpL, Rps, Rpl |
-| Cytochrome P450 | cytochrome P450, CYP, P450 |
-| Ecdysone receptor | ecdysone receptor, EcR |
-| Other targets | trehalase, laccase, aquaporin, snf7, COPI |
+The `match_essential.py` script relies on the `gene_names` field to give literature
+support scores to candidate genes. If this field is empty or missing, literature
+support will be ignored.
 
-### Step 4: Save Results
+Look for these gene patterns in titles and abstracts:
 
-Write findings to `data/{assembly}/literature_search.json`:
+| Gene | Patterns to Match |
+|------|-------------------|
+| vATPase | V-ATPase, vATPase, vha, ATP6V, vacuolar ATPase |
+| chitin synthase | chitin synthase, ChS, CHS |
+| acetylcholinesterase | acetylcholinesterase, AChE, Ace |
+| alpha-tubulin | α-tubulin, alpha-tubulin, TUA |
+| beta-tubulin | β-tubulin, beta-tubulin, TUB |
+| ribosomal protein | ribosomal protein, RpS, RpL |
+| cytochrome P450 | cytochrome P450, CYP, P450 |
+| ecdysone receptor | ecdysone receptor, EcR |
+| trehalase | trehalase, TRE |
+| laccase | laccase, Lac |
+| aquaporin | aquaporin, AQP |
+| heat shock protein | heat shock protein, HSP, Hsp |
+| actin | actin, ACT |
+| GABA receptor | GABA receptor, Rdl, GABAR |
+| sodium channel | sodium channel, Nav, para |
 
+### Step 4: Save Results in Required Format
+
+Write to `data/{assembly}/literature_search.json`:
+
+**REQUIRED FORMAT:**
 ```json
 [
   {
     "pmid": "12345678",
     "doi": "10.1234/example",
-    "title": "RNAi silencing of vATPase in Drosophila suzukii...",
+    "title": "RNAi silencing of vATPase in Drosophila suzukii causes mortality",
     "authors": ["Smith J", "Jones K"],
     "journal": "Journal of Insect Physiology",
     "year": "2020",
-    "gene_names": ["vATPase", "chitin synthase"],
-    "abstract_snippet": "We demonstrate effective gene silencing...",
-    "relevance": "Direct RNAi study in target species"
+    "gene_names": ["vATPase"],
+    "abstract_snippet": "We demonstrate effective gene silencing..."
+  },
+  {
+    "pmid": "12345679",
+    "title": "Chitin synthase and acetylcholinesterase as RNAi targets",
+    "gene_names": ["chitin synthase", "acetylcholinesterase"],
+    ...
   }
 ]
 ```
 
-### Step 5: Generate Visualization (Optional)
+**CRITICAL FIELDS:**
+- `gene_names` - **REQUIRED** - Array of gene names found in title/abstract
+- `pmid` - PubMed ID
+- `title` - Article title
 
-If accumulating results across multiple searches:
+The downstream script `match_essential.py` checks `paper.get('gene_names', [])`
+for each paper. If `gene_names` is missing or empty, that paper won't contribute
+to literature support scores.
+
+### Step 5: Verify Format
+
+After saving, verify the format is correct:
 
 ```bash
-python .deepagents/skills/literature-search/scripts/plot_literature.py \
-  --literature data/{assembly}/literature_search.json \
-  --output-dir data/{assembly}/figures/
+jq '.[0:2] | .[] | {pmid, gene_names}' data/{assembly}/literature_search.json
 ```
 
-Creates:
-- `literature_gene_frequency.png` - Bar chart of gene mentions
-- `literature_summary.txt` - Key findings summary
+Should show each paper with its extracted gene_names array.
 
-## Usage Patterns
+## Alternative: Use parse_pubmed.py Script
 
-### Pattern A: Initial Species Survey
-Call early to understand what genes have been studied for the target species.
+If you have raw PubMed XML, you can use the bundled script to extract genes:
 
-### Pattern B: Gene Validation
-Call when evaluating specific genes to find supporting literature.
+```bash
+python dsrna_agent/skills/literature-search/scripts/parse_pubmed.py \
+  --xml-file /tmp/pubmed_results.xml \
+  --output data/{assembly}/literature_search.json
+```
 
-### Pattern C: Report Enrichment
-Call before generating report to ensure all candidates have literature support.
+This automatically extracts gene names using pattern matching.
 
 ## Available MCP Tools
 
