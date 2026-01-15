@@ -1,7 +1,7 @@
 """dsRNA Designer Agent - Flexible research assistant for RNAi biopesticide design.
 
 This agent uses:
-- FilesystemBackend for direct filesystem access (genomes, BLAST DBs, outputs)
+- LocalSandboxBackend for filesystem access + shell execution
 - SkillsMiddleware for progressive disclosure of dsRNA design skills
 - MCP integration for PubMed literature search
 - Fundamental tools only (filesystem, shell) - no hardcoded domain tools
@@ -12,21 +12,119 @@ with human confirmation at each major step.
 
 import asyncio
 import json
+import subprocess
 import sys
 from pathlib import Path
 
+import httpx
 from dotenv import load_dotenv
+from langchain_core.tools import tool
 
 load_dotenv()
 
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
+from deepagents.backends.protocol import ExecuteResponse, SandboxBackendProtocol
 
 PROJECT_ROOT = Path(__file__).parent.parent
 MCP_CONFIG_PATH = PROJECT_ROOT / "mcp_config.json"
 
 # Skills are stored in the package directory
 SKILLS_DIR = Path(__file__).parent / "skills"
+
+
+class LocalSandboxBackend(FilesystemBackend, SandboxBackendProtocol):
+    """FilesystemBackend with shell execution support.
+
+    Extends FilesystemBackend to implement SandboxBackendProtocol,
+    enabling the `execute` tool for running shell commands locally.
+    """
+
+    def __init__(self, root_dir: str | Path, **kwargs):
+        super().__init__(root_dir=root_dir, **kwargs)
+        self._id = f"local-sandbox-{id(self)}"
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    def execute(self, command: str) -> ExecuteResponse:
+        """Execute a shell command in the project directory."""
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                cwd=self.cwd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+            )
+            output = result.stdout
+            if result.stderr:
+                output += "\n" + result.stderr if output else result.stderr
+            return ExecuteResponse(
+                output=output or "",
+                exit_code=result.returncode,
+                truncated=False,
+            )
+        except subprocess.TimeoutExpired:
+            return ExecuteResponse(
+                output="Command timed out after 5 minutes",
+                exit_code=-1,
+                truncated=False,
+            )
+        except Exception as e:
+            return ExecuteResponse(
+                output=f"Error executing command: {e}",
+                exit_code=-1,
+                truncated=False,
+            )
+
+
+@tool
+def fetch_url(url: str) -> str:
+    """Fetch content from a URL.
+
+    Args:
+        url: The URL to fetch content from.
+
+    Returns:
+        The text content of the response, or an error message.
+    """
+    try:
+        with httpx.Client(timeout=30, follow_redirects=True) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            return response.text[:50000]  # Limit response size
+    except httpx.HTTPStatusError as e:
+        return f"HTTP error {e.response.status_code}: {e.response.reason_phrase}"
+    except httpx.RequestError as e:
+        return f"Request failed: {e}"
+    except Exception as e:
+        return f"Error fetching URL: {e}"
+
+
+def _sanitize_nones(obj):
+    """Recursively replace None values with empty strings in dicts/lists."""
+    if obj is None:
+        return ""
+    if isinstance(obj, dict):
+        return {k: _sanitize_nones(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_nones(item) for item in obj]
+    return obj
+
+
+def _wrap_tool_with_sanitizer(tool):
+    """Wrap a tool to sanitize None values in its output."""
+    original_invoke = tool.invoke
+
+    def sanitized_invoke(*args, **kwargs):
+        result = original_invoke(*args, **kwargs)
+        return _sanitize_nones(result)
+
+    tool.invoke = sanitized_invoke
+    return tool
 
 
 def load_mcp_tools():
@@ -53,9 +151,11 @@ def load_mcp_tools():
         return []
 
     try:
-        return asyncio.run(
+        tools = asyncio.run(
             MultiServerMCPClient(connections, tool_name_prefix=True).get_tools()
         )
+        # Wrap tools to handle None values in responses (schema validation fix)
+        return [_wrap_tool_with_sanitizer(t) for t in tools]
     except Exception:
         return []
 
@@ -80,34 +180,39 @@ Your role is to assist researchers in designing dsRNA sequences that:
 2. Pass rigorous safety screening against non-target organisms (humans, pollinators)
 3. Meet EPA regulatory guidelines for environmental safety
 
+## IMPORTANT: No Subagent Delegation
+
+**DO NOT use the `task` tool to delegate work to subagents.** Execute all steps yourself
+directly, maintaining full context and presenting results to the user at each checkpoint.
+This ensures the user can review and adjust at every step.
+
 ## How to Help
 
 - **Partial tasks**: User may ask for just one step (e.g., "search for RNAi papers")
 - **Research**: User may want to explore without running the full workflow
-- **Complete workflow**: If user requests full dsRNA design, run all steps but STOP
-  after each to confirm before proceeding
+- **Complete workflow**: For full dsRNA design, use the `full-workflow` skill
 
 ## Complete Workflow Mode
 
 Trigger phrases: "design dsRNA for {species}", "run complete workflow", "full analysis"
 
-When running complete workflow:
-1. Execute each step using the relevant skill
-2. Present results clearly
-3. Ask "Proceed to next step?" before continuing
-4. Allow user to adjust, skip, or stop at any point
+**When user requests a complete workflow:**
+1. Read the `full-workflow` skill: `dsrna_agent/skills/full-workflow/SKILL.md`
+2. Follow the skill instructions exactly
+3. STOP after each step and present results
+4. Wait for user confirmation before proceeding to next step
+5. Allow user to adjust, skip, or provide feedback at any checkpoint
 
 ## Workflow Steps
 
 | Step | Skill | Key Output |
 |------|-------|------------|
 | 1 | fetch-genome | Genome stats, CDS sequences |
-| 2 | literature-search | Gene targets from published RNAi studies |
-| 3 | identify-genes | Gene ranking with evidence |
-| 4 | design-dsrna | Candidate locations, GC distribution |
-| 5 | blast-screen | Safety heatmap, match distribution |
-| 6 | score-rank | Score breakdown, ranked list |
-| 7 | generate-report | Final report, dashboard |
+| 2 | identify-genes | Gene ranking with evidence |
+| 3 | design-dsrna | Candidate locations, GC distribution |
+| 4 | blast-screen | Safety heatmap, match distribution |
+| 5 | score-rank | Score breakdown, ranked list |
+| 6 | generate-report | Final report, dashboard |
 
 ## Safety Screening (EPA Guidelines)
 
@@ -143,22 +248,25 @@ def create_dsrna_agent():
     """Create the dsRNA design assistant.
 
     Uses deepagents library with:
-    - FilesystemBackend for direct file access
+    - LocalSandboxBackend for file access + shell execution
     - SkillsMiddleware loads skills from dsrna_agent/skills/
     - MCP tools for PubMed (if configured)
-    - No hardcoded domain tools - uses fundamental tools only
+    - fetch_url tool for web requests
     """
-    # FilesystemBackend for project file access (genomes, outputs, etc.)
-    backend = FilesystemBackend(root_dir=PROJECT_ROOT)
+    # LocalSandboxBackend extends FilesystemBackend with execute() for shell commands
+    backend = LocalSandboxBackend(root_dir=PROJECT_ROOT)
 
     # MCP tools (PubMed)
     mcp_tools = load_mcp_tools()
     if mcp_tools:
         print(f"Loaded {len(mcp_tools)} MCP tools: {[t.name for t in mcp_tools]}")
 
+    # Custom tools: fetch_url for web requests
+    custom_tools = [fetch_url]
+
     return create_deep_agent(
         model="claude-3-7-sonnet-20250219",
-        tools=mcp_tools,  # Only MCP tools - fundamental tools come from deepagents
+        tools=mcp_tools + custom_tools,
         system_prompt=SYSTEM_PROMPT,
         backend=backend,
         # SkillsMiddleware handles loading, parsing frontmatter, and progressive disclosure
