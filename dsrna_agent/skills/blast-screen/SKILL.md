@@ -40,9 +40,9 @@ If databases don't exist, instruct user to run setup script and wait.
 
 ```bash
 python .deepagents/skills/blast-screen/scripts/run_blast.py \
-  --candidates output/{species_slug}/candidates.json \
+  --candidates data/{assembly}/candidates.json \
   --blast-db-dir data/blast_db \
-  --output output/{species_slug}/blast_results.json
+  --output data/{assembly}/blast_results.json
 ```
 
 The script:
@@ -55,7 +55,7 @@ The script:
 
 ```bash
 jq '[.results[] | select(.safety_status == "reject")] | length' \
-  output/{species_slug}/blast_results.json
+  data/{assembly}/blast_results.json
 ```
 
 ### Step 4: Generate Visualization
@@ -64,9 +64,9 @@ Create safety analysis plots:
 
 ```bash
 python .deepagents/skills/blast-screen/scripts/plot_safety.py \
-  --blast-results output/{species_slug}/blast_results.json \
-  --candidates output/{species_slug}/candidates.json \
-  --output-dir output/{species_slug}/figures/
+  --blast-results data/{assembly}/blast_results.json \
+  --candidates data/{assembly}/candidates.json \
+  --output-dir data/{assembly}/figures/
 ```
 
 This creates:
@@ -94,7 +94,7 @@ Output this summary to the user:
 | ... | ... | ... | ... |
 
 **Files Created:**
-- `output/{species_slug}/blast_results.json`
+- `data/{assembly}/blast_results.json`
 
 **Figures:** [Show safety heatmap]
 
@@ -119,7 +119,7 @@ These thresholds are based on:
 
 ## Output Format
 
-`output/{species_slug}/blast_results.json`:
+`data/{assembly}/blast_results.json`:
 ```json
 {
   "success": true,
@@ -140,10 +140,10 @@ These thresholds are based on:
 
 ## Expected Output
 
-- `output/{species_slug}/blast_results.json`
-- `output/{species_slug}/figures/safety_heatmap.png`
-- `output/{species_slug}/figures/safety_distribution.png`
-- `output/{species_slug}/figures/safety_by_gene.png`
+- `data/{assembly}/blast_results.json`
+- `data/{assembly}/figures/safety_heatmap.png`
+- `data/{assembly}/figures/safety_distribution.png`
+- `data/{assembly}/figures/safety_by_gene.png`
 
 ## Available Tools
 

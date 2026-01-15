@@ -75,9 +75,9 @@ Read and execute: `dsrna_agent/skills/fetch-genome/SKILL.md`
 Top mentioned genes: {gene1}, {gene2}, {gene3}
 
 **Files Created:**
-- output/{slug}/genome.fasta
-- output/{slug}/genome_metadata.json
-- output/{slug}/literature_search.json
+- data/{assembly}/genome.fasta
+- data/{assembly}/genome_metadata.json
+- data/{assembly}/literature_search.json
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Next:** Identify essential genes using orthology and literature evidence
@@ -111,7 +111,7 @@ Read and execute: `dsrna_agent/skills/identify-genes/SKILL.md`
 - Literature support: {n} genes with published RNAi data
 
 **Files Created:**
-- output/{slug}/essential_genes.json
+- data/{assembly}/essential_genes.json
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Next:** Design dsRNA candidates for top 5 genes
@@ -146,7 +146,7 @@ Design candidates for top 5 genes (3 candidates each = 15 total)
 **GC Content Distribution:** {min}% - {max}% (optimal: 35-50%)
 
 **Files Created:**
-- output/{slug}/candidates.json
+- data/{assembly}/candidates.json
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Next:** Screen candidates for off-target matches (human, honeybee)
@@ -185,7 +185,7 @@ Read and execute: `dsrna_agent/skills/blast-screen/SKILL.md`
 | ... | ... | ... | ... |
 
 **Files Created:**
-- output/{slug}/blast_results.json
+- data/{assembly}/blast_results.json
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Next:** Calculate final efficacy × safety scores
@@ -219,7 +219,7 @@ Read and execute: `dsrna_agent/skills/score-rank/SKILL.md`
 **Recommendation:** {top_candidate} targeting {gene} (score: {score})
 
 **Files Updated:**
-- output/{slug}/candidates.json (with scores)
+- data/{assembly}/candidates.json (with scores)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Next:** Generate comprehensive report
@@ -248,13 +248,13 @@ Read and execute: `dsrna_agent/skills/generate-report/SKILL.md`
 - **Safety Status:** {status}
 
 ### Files Generated
-- `output/{slug}/report.md` - Full scientific report
-- `output/{slug}/candidates.json` - All candidates with scores
-- `output/{slug}/figures/` - Visualizations
+- `data/{assembly}/report.md` - Full scientific report
+- `data/{assembly}/candidates.json` - All candidates with scores
+- `data/{assembly}/figures/` - Visualizations
 
 ### Quick Links
-- [View Full Report](output/{slug}/report.md)
-- [Download Candidates JSON](output/{slug}/candidates.json)
+- [View Full Report](data/{assembly}/report.md)
+- [Download Candidates JSON](data/{assembly}/candidates.json)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **Workflow complete.** Would you like to:

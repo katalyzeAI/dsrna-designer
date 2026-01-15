@@ -71,7 +71,7 @@ From article titles and abstracts, identify mentioned genes. Look for:
 
 ### Step 4: Save Results
 
-Write findings to `output/{species_slug}/literature_search.json`:
+Write findings to `data/{assembly}/literature_search.json`:
 
 ```json
 [
@@ -95,8 +95,8 @@ If accumulating results across multiple searches:
 
 ```bash
 python .deepagents/skills/literature-search/scripts/plot_literature.py \
-  --literature output/{species_slug}/literature_search.json \
-  --output-dir output/{species_slug}/figures/
+  --literature data/{assembly}/literature_search.json \
+  --output-dir data/{assembly}/figures/
 ```
 
 Creates:

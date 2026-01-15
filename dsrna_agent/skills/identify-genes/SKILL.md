@@ -40,10 +40,10 @@ Use the bundled Python script:
 
 ```bash
 python .deepagents/skills/identify-genes/scripts/match_essential.py \
-  --genome output/{species_slug}/genome.fasta \
+  --genome data/{assembly}/genome.fasta \
   --essential-db data/essential_genes.json \
-  --literature output/{species_slug}/literature_search.json \
-  --output output/{species_slug}/essential_genes.json
+  --literature data/{assembly}/literature_search.json \
+  --output data/{assembly}/essential_genes.json
 ```
 
 **Note:** The `--literature` argument is optional. If `literature_search.json`
@@ -51,9 +51,9 @@ doesn't exist (because literature-search wasn't run), omit this flag:
 
 ```bash
 python .deepagents/skills/identify-genes/scripts/match_essential.py \
-  --genome output/{species_slug}/genome.fasta \
+  --genome data/{assembly}/genome.fasta \
   --essential-db data/essential_genes.json \
-  --output output/{species_slug}/essential_genes.json
+  --output data/{assembly}/essential_genes.json
 ```
 
 The script:
@@ -67,7 +67,7 @@ The script:
 Use `shell`:
 
 ```bash
-jq 'length' output/{species_slug}/essential_genes.json
+jq 'length' data/{assembly}/essential_genes.json
 ```
 
 Should show ~20 genes (or fewer if genome poorly annotated)
@@ -78,8 +78,8 @@ Create plots showing gene rankings:
 
 ```bash
 python .deepagents/skills/identify-genes/scripts/plot_genes.py \
-  --genes output/{species_slug}/essential_genes.json \
-  --output-dir output/{species_slug}/figures/
+  --genes data/{assembly}/essential_genes.json \
+  --output-dir data/{assembly}/figures/
 ```
 
 This creates:
@@ -105,7 +105,7 @@ Output this summary to the user:
 | 1 | ... | ... | ... | ... |
 
 **Files Created:**
-- `output/{species_slug}/essential_genes.json`
+- `data/{assembly}/essential_genes.json`
 
 **Figures:** [Show gene ranking plot]
 
@@ -127,7 +127,7 @@ Each matched gene receives a score from 0 to 1:
 
 ## Output Format
 
-`output/{species_slug}/essential_genes.json`:
+`data/{assembly}/essential_genes.json`:
 ```json
 [
   {
@@ -148,10 +148,10 @@ Each matched gene receives a score from 0 to 1:
 
 ## Expected Output
 
-- `output/{species_slug}/essential_genes.json`
-- `output/{species_slug}/figures/gene_ranking.png`
-- `output/{species_slug}/figures/gene_evidence_breakdown.png`
-- `output/{species_slug}/figures/gene_length_distribution.png`
+- `data/{assembly}/essential_genes.json`
+- `data/{assembly}/figures/gene_ranking.png`
+- `data/{assembly}/figures/gene_evidence_breakdown.png`
+- `data/{assembly}/figures/gene_length_distribution.png`
 
 ## Available Tools
 

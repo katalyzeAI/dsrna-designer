@@ -270,14 +270,22 @@ Example:
 read_file dsrna_agent/skills/fetch-genome/SKILL.md
 ```
 
-## Output Location
+## Data Storage
 
-All artifacts are written to `output/{species_slug}/`:
-- `genome.fasta` - Downloaded CDS sequences
-- `essential_genes.json` - Ranked essential genes
-- `candidates.json` - dsRNA candidates with scores
-- `blast_results.json` - Off-target screening results
-- `report.md` - Final report with recommendations
+All species-specific data is stored in `data/{assembly}/` where `{assembly}` is the
+NCBI assembly accession (e.g., `GCF_000001215.4` for Drosophila melanogaster).
+
+**IMPORTANT: Check for existing data before downloading.** If `data/{assembly}/genome.fasta`
+exists, skip the download and use cached data.
+
+Structure:
+- `data/{assembly}/genome.fasta` - Downloaded CDS sequences
+- `data/{assembly}/genome_metadata.json` - Assembly info, download date
+- `data/{assembly}/essential_genes.json` - Ranked essential genes
+- `data/{assembly}/candidates.json` - dsRNA candidates with scores
+- `data/{assembly}/blast_results.json` - Off-target screening results
+- `data/{assembly}/figures/` - Visualizations
+- `data/{assembly}/report.md` - Final report with recommendations
 """
 
 

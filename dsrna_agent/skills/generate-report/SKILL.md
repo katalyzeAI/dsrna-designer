@@ -15,18 +15,18 @@ results, recommendations, and safety analysis.
 ### Step 1: Load All Data Files
 
 Use `read_file` for:
-- `output/{species_slug}/ranked_candidates.json`
-- `output/{species_slug}/essential_genes.json`
-- `output/{species_slug}/literature_search.json` (optional - if literature was searched)
-- `output/{species_slug}/blast_results.json`
-- `output/{species_slug}/genome_metadata.json`
+- `data/{assembly}/ranked_candidates.json`
+- `data/{assembly}/essential_genes.json`
+- `data/{assembly}/literature_search.json` (optional - if literature was searched)
+- `data/{assembly}/blast_results.json`
+- `data/{assembly}/genome_metadata.json`
 
 **Tip:** If literature references are needed for the report but `literature_search.json`
 doesn't exist, use the `literature-search` utility skill now to enrich the report.
 
 ### Step 2: Generate Report
 
-Create `output/{species_slug}/report.md` following the structure below.
+Create `data/{assembly}/report.md` following the structure below.
 
 Use the report template in `references/report_template.md` as a guide.
 
@@ -36,8 +36,8 @@ Generate a final summary visualization:
 
 ```bash
 python .deepagents/skills/generate-report/scripts/create_dashboard.py \
-  --data-dir output/{species_slug}/ \
-  --output output/{species_slug}/figures/summary_dashboard.png
+  --data-dir data/{assembly}/ \
+  --output data/{assembly}/figures/summary_dashboard.png
 ```
 
 This creates a multi-panel dashboard showing:
@@ -53,7 +53,7 @@ Output this summary to the user:
 ```
 ## Workflow Complete
 
-**Report Generated:** `output/{species_slug}/report.md`
+**Report Generated:** `data/{assembly}/report.md`
 
 **Top Recommendation:**
 - **Candidate:** {top_candidate}
@@ -68,14 +68,14 @@ Output this summary to the user:
 ```
 
 **Files Created:**
-- `output/{species_slug}/report.md`
-- `output/{species_slug}/figures/summary_dashboard.png`
+- `data/{assembly}/report.md`
+- `data/{assembly}/figures/summary_dashboard.png`
 
 **Dashboard:** [Show summary dashboard]
 
 ---
 **Next Steps:**
-1. Review the full report at `output/{species_slug}/report.md`
+1. Review the full report at `data/{assembly}/report.md`
 2. Order synthesis of top candidate sequence
 3. Design feeding bioassay protocol
 ```
@@ -125,8 +125,8 @@ For top 3 candidates:
 
 ## Expected Output
 
-- `output/{species_slug}/report.md` - Professional markdown report
-- `output/{species_slug}/figures/summary_dashboard.png` - Final dashboard
+- `data/{assembly}/report.md` - Professional markdown report
+- `data/{assembly}/figures/summary_dashboard.png` - Final dashboard
 - Complete audit trail of all intermediate files and plots
 
 ## Available Tools

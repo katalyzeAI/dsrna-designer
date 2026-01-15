@@ -16,17 +16,17 @@ gene essentiality, and safety.
 
 ```bash
 python .deepagents/skills/score-rank/scripts/calculate_scores.py \
-  --candidates output/{species_slug}/candidates.json \
-  --blast-results output/{species_slug}/blast_results.json \
-  --essential-genes output/{species_slug}/essential_genes.json \
-  --output output/{species_slug}/ranked_candidates.json
+  --candidates data/{assembly}/candidates.json \
+  --blast-results data/{assembly}/blast_results.json \
+  --essential-genes data/{assembly}/essential_genes.json \
+  --output data/{assembly}/ranked_candidates.json
 ```
 
 ### Step 2: Verify Rankings
 
 ```bash
 jq '.[0:5] | .[] | {id, gene_name, combined_score, safety_status}' \
-  output/{species_slug}/ranked_candidates.json
+  data/{assembly}/ranked_candidates.json
 ```
 
 ### Step 3: Generate Visualization
@@ -35,8 +35,8 @@ Create comprehensive scoring plots:
 
 ```bash
 python .deepagents/skills/score-rank/scripts/plot_rankings.py \
-  --ranked output/{species_slug}/ranked_candidates.json \
-  --output-dir output/{species_slug}/figures/
+  --ranked data/{assembly}/ranked_candidates.json \
+  --output-dir data/{assembly}/figures/
 ```
 
 This creates:
@@ -62,7 +62,7 @@ Output this summary to the user:
 - Rationale: {why_this_candidate}
 
 **Files Created:**
-- `output/{species_slug}/ranked_candidates.json`
+- `data/{assembly}/ranked_candidates.json`
 
 **Figures:** [Show efficacy vs safety scatter plot]
 
@@ -108,7 +108,7 @@ combined = efficacy × safety
 
 ## Output Format
 
-`output/{species_slug}/ranked_candidates.json`:
+`data/{assembly}/ranked_candidates.json`:
 ```json
 [
   {
@@ -136,10 +136,10 @@ Sorted by `combined_score` descending.
 
 ## Expected Output
 
-- `output/{species_slug}/ranked_candidates.json`
-- `output/{species_slug}/figures/score_breakdown.png`
-- `output/{species_slug}/figures/efficacy_vs_safety_scatter.png`
-- `output/{species_slug}/figures/top_candidates_radar.png`
+- `data/{assembly}/ranked_candidates.json`
+- `data/{assembly}/figures/score_breakdown.png`
+- `data/{assembly}/figures/efficacy_vs_safety_scatter.png`
+- `data/{assembly}/figures/top_candidates_radar.png`
 
 ## Available Tools
 

@@ -17,7 +17,7 @@ for the top 5 genes (15 total candidates).
 Use `shell` with jq:
 
 ```bash
-jq '.[0:5]' output/{species_slug}/essential_genes.json > /tmp/top5_genes.json
+jq '.[0:5]' data/{assembly}/essential_genes.json > /tmp/top5_genes.json
 ```
 
 ### Step 2: Design Candidates
@@ -26,11 +26,11 @@ Run the sliding window design script:
 
 ```bash
 python .deepagents/skills/design-dsrna/scripts/sliding_window.py \
-  --genes output/{species_slug}/essential_genes.json \
+  --genes data/{assembly}/essential_genes.json \
   --num-genes 5 \
   --candidates-per-gene 3 \
   --length 300 \
-  --output output/{species_slug}/candidates.json
+  --output data/{assembly}/candidates.json
 ```
 
 This processes top 5 genes and generates 3 candidates each = 15 total.
@@ -38,7 +38,7 @@ This processes top 5 genes and generates 3 candidates each = 15 total.
 ### Step 3: Verify Output
 
 ```bash
-jq 'length' output/{species_slug}/candidates.json
+jq 'length' data/{assembly}/candidates.json
 ```
 
 Should show 15 (or fewer if some genes are too short)
@@ -49,9 +49,9 @@ Create plots showing candidate design quality:
 
 ```bash
 python .deepagents/skills/design-dsrna/scripts/plot_candidates.py \
-  --candidates output/{species_slug}/candidates.json \
-  --genes output/{species_slug}/essential_genes.json \
-  --output-dir output/{species_slug}/figures/
+  --candidates data/{assembly}/candidates.json \
+  --genes data/{assembly}/essential_genes.json \
+  --output-dir data/{assembly}/figures/
 ```
 
 This creates:
@@ -78,7 +78,7 @@ Output this summary to the user:
 | ... | ... | ... | ... | ... |
 
 **Files Created:**
-- `output/{species_slug}/candidates.json`
+- `data/{assembly}/candidates.json`
 
 **Figures:** [Show candidate locations plot]
 
@@ -111,7 +111,7 @@ Proceed to blast-screen? (yes/no)
 
 ## Output Format
 
-`output/{species_slug}/candidates.json`:
+`data/{assembly}/candidates.json`:
 ```json
 [
   {
@@ -131,10 +131,10 @@ Proceed to blast-screen? (yes/no)
 
 ## Expected Output
 
-- `output/{species_slug}/candidates.json`
-- `output/{species_slug}/figures/candidate_locations.png`
-- `output/{species_slug}/figures/candidate_gc_distribution.png`
-- `output/{species_slug}/figures/candidate_scores_heatmap.png`
+- `data/{assembly}/candidates.json`
+- `data/{assembly}/figures/candidate_locations.png`
+- `data/{assembly}/figures/candidate_gc_distribution.png`
+- `data/{assembly}/figures/candidate_scores_heatmap.png`
 
 ## Available Tools
 
