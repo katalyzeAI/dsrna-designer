@@ -297,6 +297,7 @@ def create_dsrna_agent():
     - SkillsMiddleware loads skills from dsrna_agent/skills/
     - MCP tools for PubMed (if configured)
     - fetch_url tool for web requests
+    - SummarizationMiddleware (built-in) to compact context when it gets too long
     """
     from langchain_anthropic import ChatAnthropic
 
@@ -311,19 +312,23 @@ def create_dsrna_agent():
     # Custom tools: fetch_url for web requests
     custom_tools = [fetch_url]
 
-    # Use model instance with reduced max_tokens to avoid context limit errors
-    # Default is 64000, but with large conversations this can exceed 200k limit
+    # Configure model with token profile for better summarization triggers
+    # The profile tells SummarizationMiddleware the context window size
     model = ChatAnthropic(
         model="claude-3-7-sonnet-20250219",
         max_tokens=16000,
     )
+    # Set profile so SummarizationMiddleware uses fraction-based triggers
+    # This triggers summarization at 85% of max_input_tokens (170k = 85% of 200k)
+    model.profile = {"max_input_tokens": 200000}
 
     return create_deep_agent(
         model=model,
         tools=mcp_tools + custom_tools,
         system_prompt=SYSTEM_PROMPT,
         backend=backend,
-        # SkillsMiddleware handles loading, parsing frontmatter, and progressive disclosure
+        # SummarizationMiddleware is built-in and will trigger at 85% of max_input_tokens
+        # keeping 10% of messages intact when summarizing
         skills=[str(SKILLS_DIR) + "/"],
     )
 
