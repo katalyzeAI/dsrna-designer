@@ -10,23 +10,36 @@ description: Generate comprehensive markdown report with ranked candidates
 Use as the final step to create a human-readable markdown report with all
 results, recommendations, and safety analysis.
 
+## Data Storage Structure
+
+**Reads from:**
+- `data/{assembly}/genome_metadata.json` - Cached genome metadata
+- `output/{run}/ranked_candidates.json` - From score-rank step
+- `output/{run}/essential_genes.json` - From identify-genes step
+- `output/{run}/literature_search.json` - From literature search (optional)
+- `output/{run}/blast_results.json` - From blast-screen step
+
+**Writes to:**
+- `output/{run}/report.md` - Final markdown report
+- `output/{run}/figures/summary_dashboard.png` - Final dashboard
+
 ## Instructions
 
 ### Step 1: Load All Data Files
 
 Use `read_file` for:
-- `data/{assembly}/ranked_candidates.json`
-- `data/{assembly}/essential_genes.json`
-- `data/{assembly}/literature_search.json` (optional - if literature was searched)
-- `data/{assembly}/blast_results.json`
-- `data/{assembly}/genome_metadata.json`
+- `output/{run}/ranked_candidates.json`
+- `output/{run}/essential_genes.json`
+- `output/{run}/literature_search.json` (optional - if literature was searched)
+- `output/{run}/blast_results.json`
+- `data/{assembly}/genome_metadata.json` (cached input data)
 
 **Tip:** If literature references are needed for the report but `literature_search.json`
 doesn't exist, use the `literature-search` utility skill now to enrich the report.
 
 ### Step 2: Generate Report
 
-Create `data/{assembly}/report.md` following the structure below.
+Create `output/{run}/report.md` following the structure below.
 
 Use the report template in `references/report_template.md` as a guide.
 
@@ -36,8 +49,8 @@ Generate a final summary visualization:
 
 ```bash
 python .deepagents/skills/generate-report/scripts/create_dashboard.py \
-  --data-dir data/{assembly}/ \
-  --output data/{assembly}/figures/summary_dashboard.png
+  --data-dir output/{run}/ \
+  --output output/{run}/figures/summary_dashboard.png
 ```
 
 This creates a multi-panel dashboard showing:
@@ -53,7 +66,7 @@ Output this summary to the user:
 ```
 ## Workflow Complete
 
-**Report Generated:** `data/{assembly}/report.md`
+**Report Generated:** `output/{run}/report.md`
 
 **Top Recommendation:**
 - **Candidate:** {top_candidate}
@@ -68,14 +81,14 @@ Output this summary to the user:
 ```
 
 **Files Created:**
-- `data/{assembly}/report.md`
-- `data/{assembly}/figures/summary_dashboard.png`
+- `output/{run}/report.md`
+- `output/{run}/figures/summary_dashboard.png`
 
 **Dashboard:** [Show summary dashboard]
 
 ---
 **Next Steps:**
-1. Review the full report at `data/{assembly}/report.md`
+1. Review the full report at `output/{run}/report.md`
 2. Order synthesis of top candidate sequence
 3. Design feeding bioassay protocol
 ```
@@ -125,8 +138,9 @@ For top 3 candidates:
 
 ## Expected Output
 
-- `data/{assembly}/report.md` - Professional markdown report
-- `data/{assembly}/figures/summary_dashboard.png` - Final dashboard
+All outputs go in `output/{run}/`:
+- `report.md` - Professional markdown report
+- `figures/summary_dashboard.png` - Final dashboard
 - Complete audit trail of all intermediate files and plots
 
 ## Available Tools

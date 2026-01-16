@@ -10,23 +10,34 @@ description: Calculate final scores combining efficacy and safety
 Use after BLAST screening to compute final rankings combining design quality,
 gene essentiality, and safety.
 
+## Data Storage Structure
+
+**Reads from:**
+- `output/{run}/candidates.json` - From design-dsrna step
+- `output/{run}/blast_results.json` - From blast-screen step
+- `output/{run}/essential_genes.json` - From identify-genes step
+
+**Writes to:**
+- `output/{run}/ranked_candidates.json` - Final ranked list
+- `output/{run}/figures/` - Scoring visualization plots
+
 ## Instructions
 
 ### Step 1: Run Scoring Script
 
 ```bash
 python .deepagents/skills/score-rank/scripts/calculate_scores.py \
-  --candidates data/{assembly}/candidates.json \
-  --blast-results data/{assembly}/blast_results.json \
-  --essential-genes data/{assembly}/essential_genes.json \
-  --output data/{assembly}/ranked_candidates.json
+  --candidates output/{run}/candidates.json \
+  --blast-results output/{run}/blast_results.json \
+  --essential-genes output/{run}/essential_genes.json \
+  --output output/{run}/ranked_candidates.json
 ```
 
 ### Step 2: Verify Rankings
 
 ```bash
 jq '.[0:5] | .[] | {id, gene_name, combined_score, safety_status}' \
-  data/{assembly}/ranked_candidates.json
+  output/{run}/ranked_candidates.json
 ```
 
 ### Step 3: Generate Visualization
@@ -35,8 +46,8 @@ Create comprehensive scoring plots:
 
 ```bash
 python .deepagents/skills/score-rank/scripts/plot_rankings.py \
-  --ranked data/{assembly}/ranked_candidates.json \
-  --output-dir data/{assembly}/figures/
+  --ranked output/{run}/ranked_candidates.json \
+  --output-dir output/{run}/figures/
 ```
 
 This creates:
@@ -62,7 +73,8 @@ Output this summary to the user:
 - Rationale: {why_this_candidate}
 
 **Files Created:**
-- `data/{assembly}/ranked_candidates.json`
+- `output/{run}/ranked_candidates.json`
+- `output/{run}/figures/score_breakdown.png`
 
 **Figures:** [Show efficacy vs safety scatter plot]
 
@@ -108,7 +120,7 @@ combined = efficacy × safety
 
 ## Output Format
 
-`data/{assembly}/ranked_candidates.json`:
+`output/{run}/ranked_candidates.json`:
 ```json
 [
   {
@@ -136,10 +148,11 @@ Sorted by `combined_score` descending.
 
 ## Expected Output
 
-- `data/{assembly}/ranked_candidates.json`
-- `data/{assembly}/figures/score_breakdown.png`
-- `data/{assembly}/figures/efficacy_vs_safety_scatter.png`
-- `data/{assembly}/figures/top_candidates_radar.png`
+All outputs go in `output/{run}/`:
+- `ranked_candidates.json`
+- `figures/score_breakdown.png`
+- `figures/efficacy_vs_safety_scatter.png`
+- `figures/top_candidates_radar.png`
 
 ## Available Tools
 

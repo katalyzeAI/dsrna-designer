@@ -10,6 +10,16 @@ description: Screen dsRNA candidates for off-target matches in human and honeybe
 Use after designing candidates to screen all 15 dsRNA sequences against human
 and honeybee genomes for safety assessment.
 
+## Data Storage Structure
+
+**Reads from:**
+- `data/blast_db/` - Cached BLAST databases (input data)
+- `output/{run}/candidates.json` - From design-dsrna step
+
+**Writes to:**
+- `output/{run}/blast_results.json` - Screening results
+- `output/{run}/figures/` - Safety visualization plots
+
 ## Prerequisites
 
 BLAST+ must be installed and databases must exist:
@@ -40,9 +50,9 @@ If databases don't exist, instruct user to run setup script and wait.
 
 ```bash
 python .deepagents/skills/blast-screen/scripts/run_blast.py \
-  --candidates data/{assembly}/candidates.json \
+  --candidates output/{run}/candidates.json \
   --blast-db-dir data/blast_db \
-  --output data/{assembly}/blast_results.json
+  --output output/{run}/blast_results.json
 ```
 
 The script:
@@ -55,7 +65,7 @@ The script:
 
 ```bash
 jq '[.results[] | select(.safety_status == "reject")] | length' \
-  data/{assembly}/blast_results.json
+  output/{run}/blast_results.json
 ```
 
 ### Step 4: Generate Visualization
@@ -64,9 +74,9 @@ Create safety analysis plots:
 
 ```bash
 python .deepagents/skills/blast-screen/scripts/plot_safety.py \
-  --blast-results data/{assembly}/blast_results.json \
-  --candidates data/{assembly}/candidates.json \
-  --output-dir data/{assembly}/figures/
+  --blast-results output/{run}/blast_results.json \
+  --candidates output/{run}/candidates.json \
+  --output-dir output/{run}/figures/
 ```
 
 This creates:
@@ -94,7 +104,8 @@ Output this summary to the user:
 | ... | ... | ... | ... |
 
 **Files Created:**
-- `data/{assembly}/blast_results.json`
+- `output/{run}/blast_results.json`
+- `output/{run}/figures/safety_heatmap.png`
 
 **Figures:** [Show safety heatmap]
 
@@ -119,7 +130,7 @@ These thresholds are based on:
 
 ## Output Format
 
-`data/{assembly}/blast_results.json`:
+`output/{run}/blast_results.json`:
 ```json
 {
   "success": true,
@@ -140,10 +151,11 @@ These thresholds are based on:
 
 ## Expected Output
 
-- `data/{assembly}/blast_results.json`
-- `data/{assembly}/figures/safety_heatmap.png`
-- `data/{assembly}/figures/safety_distribution.png`
-- `data/{assembly}/figures/safety_by_gene.png`
+All outputs go in `output/{run}/`:
+- `blast_results.json`
+- `figures/safety_heatmap.png`
+- `figures/safety_distribution.png`
+- `figures/safety_by_gene.png`
 
 ## Available Tools
 

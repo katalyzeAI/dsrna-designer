@@ -10,6 +10,17 @@ description: Match essential genes in target genome using orthology and literatu
 Use after genome fetch to identify essential genes in the target species that
 are good dsRNA candidates.
 
+## Data Storage Structure
+
+**Reads from:**
+- `data/{assembly}/genome.fasta` - Cached genome (input data)
+- `data/essential_genes.json` - Reference database (input data)
+- `output/{run}/literature_search.json` - Analysis output from previous step
+
+**Writes to:**
+- `output/{run}/essential_genes.json` - Matched essential genes
+- `output/{run}/figures/` - Visualization plots
+
 ## Automatic Literature Validation
 
 When evaluating candidate genes, **automatically search PubMed** for supporting evidence:
@@ -42,8 +53,8 @@ Use the bundled Python script:
 python .deepagents/skills/identify-genes/scripts/match_essential.py \
   --genome data/{assembly}/genome.fasta \
   --essential-db data/essential_genes.json \
-  --literature data/{assembly}/literature_search.json \
-  --output data/{assembly}/essential_genes.json
+  --literature output/{run}/literature_search.json \
+  --output output/{run}/essential_genes.json
 ```
 
 **Note:** The `--literature` argument is optional. If `literature_search.json`
@@ -53,7 +64,7 @@ doesn't exist (because literature-search wasn't run), omit this flag:
 python .deepagents/skills/identify-genes/scripts/match_essential.py \
   --genome data/{assembly}/genome.fasta \
   --essential-db data/essential_genes.json \
-  --output data/{assembly}/essential_genes.json
+  --output output/{run}/essential_genes.json
 ```
 
 The script:
@@ -67,7 +78,7 @@ The script:
 Use `shell`:
 
 ```bash
-jq 'length' data/{assembly}/essential_genes.json
+jq 'length' output/{run}/essential_genes.json
 ```
 
 Should show ~20 genes (or fewer if genome poorly annotated)
@@ -78,8 +89,8 @@ Create plots showing gene rankings:
 
 ```bash
 python .deepagents/skills/identify-genes/scripts/plot_genes.py \
-  --genes data/{assembly}/essential_genes.json \
-  --output-dir data/{assembly}/figures/
+  --genes output/{run}/essential_genes.json \
+  --output-dir output/{run}/figures/
 ```
 
 This creates:
@@ -105,7 +116,8 @@ Output this summary to the user:
 | 1 | ... | ... | ... | ... |
 
 **Files Created:**
-- `data/{assembly}/essential_genes.json`
+- `output/{run}/essential_genes.json`
+- `output/{run}/figures/gene_ranking.png`
 
 **Figures:** [Show gene ranking plot]
 
@@ -127,7 +139,7 @@ Each matched gene receives a score from 0 to 1:
 
 ## Output Format
 
-`data/{assembly}/essential_genes.json`:
+`output/{run}/essential_genes.json`:
 ```json
 [
   {
@@ -148,10 +160,11 @@ Each matched gene receives a score from 0 to 1:
 
 ## Expected Output
 
-- `data/{assembly}/essential_genes.json`
-- `data/{assembly}/figures/gene_ranking.png`
-- `data/{assembly}/figures/gene_evidence_breakdown.png`
-- `data/{assembly}/figures/gene_length_distribution.png`
+All outputs go in `output/{run}/`:
+- `essential_genes.json`
+- `figures/gene_ranking.png`
+- `figures/gene_evidence_breakdown.png`
+- `figures/gene_length_distribution.png`
 
 ## Available Tools
 

@@ -272,20 +272,27 @@ read_file dsrna_agent/skills/fetch-genome/SKILL.md
 
 ## Data Storage
 
-All species-specific data is stored in `data/{assembly}/` where `{assembly}` is the
-NCBI assembly accession (e.g., `GCF_000001215.4` for Drosophila melanogaster).
+**Input data** (cached, reusable) goes in `data/`:
+- `data/{assembly}/genome.fasta` - Downloaded CDS sequences
+- `data/{assembly}/genome_metadata.json` - Assembly info, download date
+- `data/essential_genes.json` - Reference essential genes database
+- `data/blast_db/` - BLAST databases (human, honeybee)
 
 **IMPORTANT: Check for existing data before downloading.** If `data/{assembly}/genome.fasta`
 exists, skip the download and use cached data.
 
-Structure:
-- `data/{assembly}/genome.fasta` - Downloaded CDS sequences
-- `data/{assembly}/genome_metadata.json` - Assembly info, download date
-- `data/{assembly}/essential_genes.json` - Ranked essential genes
-- `data/{assembly}/candidates.json` - dsRNA candidates with scores
-- `data/{assembly}/blast_results.json` - Off-target screening results
-- `data/{assembly}/figures/` - Visualizations
-- `data/{assembly}/report.md` - Final report with recommendations
+**Analysis outputs** (per-run) go in `output/{timestamp}-{species}/`:
+- Create output directory at workflow start: `output/YYYYMMDD-HHMMSS-{species_slug}/`
+- Example: `output/20250115-143022-drosophila_suzukii/`
+
+Structure for each analysis run:
+- `output/{run}/literature_search.json` - PubMed search results
+- `output/{run}/essential_genes.json` - Matched genes for this species
+- `output/{run}/candidates.json` - dsRNA candidates with scores
+- `output/{run}/blast_results.json` - Off-target screening results
+- `output/{run}/ranked_candidates.json` - Final ranked candidates
+- `output/{run}/figures/` - Visualizations
+- `output/{run}/report.md` - Final report with recommendations
 """
 
 

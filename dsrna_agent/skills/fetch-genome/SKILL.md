@@ -10,6 +10,15 @@ description: Download CDS sequences from NCBI RefSeq for a target species
 Use at the start of dsRNA design workflow when you need coding sequences (CDS)
 for a pest species from NCBI.
 
+## Data Storage Structure
+
+**Input data** (cached, reusable) goes in `data/{assembly}/`:
+- `genome.fasta` - Downloaded CDS sequences
+- `genome_metadata.json` - Assembly info, download date
+
+**Analysis outputs** go in `output/{run}/` where `{run}` is created by the
+full-workflow skill as `YYYYMMDD-HHMMSS-{species_slug}`.
+
 ## IMPORTANT: Check Cache First
 
 Before downloading, always check if the genome data already exists:
@@ -125,6 +134,9 @@ Use `write_file` to save `data/{ASSEMBLY_ACCESSION}/genome_metadata.json`:
 
 ### Step 9: Search Literature (Automatic)
 
+**NOTE:** Literature search results are analysis outputs, NOT cached input data.
+Save them to `output/{run}/literature_search.json`, not in `data/`.
+
 Automatically search PubMed for RNAi studies on this species:
 ```
 pubmed_search_articles
@@ -136,7 +148,7 @@ max_results: 50
 title and abstract. See `dsrna_agent/skills/literature-search/SKILL.md` for the
 list of gene patterns to look for (vATPase, chitin synthase, acetylcholinesterase, etc.)
 
-Save to `data/{ASSEMBLY_ACCESSION}/literature_search.json` in this format:
+Save to `output/{run}/literature_search.json` in this format:
 ```json
 [
   {
@@ -170,10 +182,12 @@ Output this summary to the user:
 
 **Literature:** Found {paper_count} RNAi papers, top genes: {gene_list}
 
-**Data Location:**
+**Cached Input Data:**
 - `data/{assembly_accession}/genome.fasta`
 - `data/{assembly_accession}/genome_metadata.json`
-- `data/{assembly_accession}/literature_search.json`
+
+**Analysis Output:**
+- `output/{run}/literature_search.json`
 
 ---
 Proceed to identify-genes? (yes/no)
@@ -181,9 +195,12 @@ Proceed to identify-genes? (yes/no)
 
 ## Expected Output
 
-- `data/{assembly}/genome.fasta` - Downloaded CDS sequences
-- `data/{assembly}/genome_metadata.json` - TaxID, assembly ID, stats
-- `data/{assembly}/literature_search.json` - PubMed search results
+**Cached input data** (in `data/{assembly}/`):
+- `genome.fasta` - Downloaded CDS sequences
+- `genome_metadata.json` - TaxID, assembly ID, stats
+
+**Analysis outputs** (in `output/{run}/`):
+- `literature_search.json` - PubMed search results with extracted gene names
 
 ## Available Tools
 

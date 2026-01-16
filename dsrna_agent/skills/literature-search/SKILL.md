@@ -84,7 +84,9 @@ Look for these gene patterns in titles and abstracts:
 
 ### Step 4: Save Results in Required Format
 
-Write to `data/{assembly}/literature_search.json`:
+**Analysis outputs go in `output/{run}/`, NOT in `data/`.**
+
+Write to `output/{run}/literature_search.json`:
 
 **REQUIRED FORMAT:**
 ```json
@@ -122,7 +124,7 @@ to literature support scores.
 After saving, verify the format is correct:
 
 ```bash
-jq '.[0:2] | .[] | {pmid, gene_names}' data/{assembly}/literature_search.json
+jq '.[0:2] | .[] | {pmid, gene_names}' output/{run}/literature_search.json
 ```
 
 Should show each paper with its extracted gene_names array.
@@ -134,7 +136,7 @@ If you have raw PubMed XML, you can use the bundled script to extract genes:
 ```bash
 python dsrna_agent/skills/literature-search/scripts/parse_pubmed.py \
   --xml-file /tmp/pubmed_results.xml \
-  --output data/{assembly}/literature_search.json
+  --output output/{run}/literature_search.json
 ```
 
 This automatically extracts gene names using pattern matching.
